@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url = env("DATABASE_URL")
+    }
+model User{
+  id     String  @id @default(ulid())
+  name String 
+  surname String
+  email String @unique
+  password String 
+  isActive Boolean
+  lockedOut Boolean
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  roles UserRole[]
+  groups UserGroup[]
+
+@@map("Users")
+}
+model UserRole {
+  id String @id @default(ulid())
+  roleid String 
+  userid String
+  role Role @relation(fields: [roleid], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userid], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+model UserGroup {
+  id String @id @default(ulid())
+  userid String 
+  groupid String 
+  user User @relation(fields: [userid], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupid], references: [id],onDelete: Cascade)
+    createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+model Group {
+  id String @id @default(ulid())
+  name String @unique
+  label String 
+  roleid String
+  role Role @relation(fields: [roleid], references: [id], onDelete: Cascade)
+  roles GroupRole[]
+  users UserGroup[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model Role {
+  id     String  @id @default(ulid())
+  name   String  @unique
+  acls   ACL[]   
+  group Group[]
+  UserRole UserRole[]
+  GroupRole GroupRole[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+model GroupRole {
+  id String @id @default(ulid())
+  groupid String
+  roleid String 
+  group Group @relation(fields: [groupid], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleid], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+model Module {
+  id     String  @id @default(ulid())
+  name   String  @unique
+  label String
+  acls   ACL[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at") 
+}
+
+model ACL {
+  id        String   @id @default(ulid())
+  roleid    String
+  moduleid  String
+  canCreate Boolean  @default(false)
+  canRead   Boolean  @default(false)
+  canUpdate Boolean  @default(false)
+  canDelete Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+
+  role   Role   @relation(fields: [roleid], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleid], references: [id], onDelete: Cascade)
+
+  @@unique([roleid, moduleid]) 
+}
