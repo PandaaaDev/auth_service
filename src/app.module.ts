@@ -10,6 +10,9 @@ import { ConfigModule } from '@nestjs/config';
 import { TokenService } from './token/token.service';
 import { PrismaClient } from '@prisma/client';
 import { CryptoService } from './crypto/crypto.service';
+import { UserService } from './user/user.service';
+import { UserController } from './user/user.controller';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -20,8 +23,9 @@ import { CryptoService } from './crypto/crypto.service';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '15m' },
     }),
+    RedisModule,
   ],
-  controllers: [AppController, RbacController, AuthController],
+  controllers: [AppController, RbacController, AuthController, UserController],
   providers: [
     AppService,
     RbacService,
@@ -29,6 +33,7 @@ import { CryptoService } from './crypto/crypto.service';
     PrismaService,
     PrismaClient,
     CryptoService,
+    UserService,
   ],
 })
 export class AppModule {}

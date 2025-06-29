@@ -4,7 +4,9 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { Response } from 'express';
@@ -68,11 +70,16 @@ export class AuthController {
     });
   }
 
-  // @Post('refresh')
-  // async refreshToken(@Body() body, @Req() request, @Res() res) {
-  //   // const refresh_token = request.cookies['refresh_token'];
-  //   // console.log(refresh_token);
-  //   // const validToken = this.tokenService.validateRefreshToken(refresh_token);
-  //   // gets a token form user and returns new one both access and refresh?
-  // }
+  @Post('refresh')
+  async refreshToken(@Body() body, @Req() request, @Res() res) {
+    const refresh_token = request.cookies['refresh_token'];
+    console.log(refresh_token);
+    const validToken =
+      await this.tokenService.validateRefreshToken(refresh_token);
+
+    if (validToken && validToken.sub !== body.id) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+    return 'Works fine!';
+  }
 }
