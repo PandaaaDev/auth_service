@@ -1,8 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { RbacService } from './rbac/rbac.service';
-import { RbacController } from './rbac/rbac.controller';
 import { PrismaService } from './prisma/prisma.service';
 import { AuthController } from './auth/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
@@ -21,14 +17,7 @@ import { CryptoService } from './crypto/crypto.service';
       signOptions: { expiresIn: '15m' },
     }),
   ],
-  controllers: [AppController, RbacController, AuthController],
-  providers: [
-    AppService,
-    RbacService,
-    TokenService,
-    PrismaService,
-    PrismaClient,
-    CryptoService,
-  ],
+  controllers: [AuthController],
+  providers: [TokenService, PrismaService, PrismaClient, CryptoService],
 })
 export class AppModule {}
