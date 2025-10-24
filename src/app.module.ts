@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TokenService } from './token/token.service';
 import { PrismaClient } from '@prisma/client';
 import { CryptoService } from './crypto/crypto.service';
+import { UserService } from './user/user.service';
 
 @Module({
   imports: [
@@ -18,6 +19,12 @@ import { CryptoService } from './crypto/crypto.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [TokenService, PrismaService, PrismaClient, CryptoService],
+  providers: [
+    TokenService,
+    PrismaService,
+    PrismaClient,
+    CryptoService,
+    UserService,
+  ],
 })
 export class AppModule {}

@@ -1,9 +1,12 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Get,
   HttpException,
   HttpStatus,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
@@ -11,7 +14,7 @@ import { Response } from 'express';
 import { CryptoService } from 'src/crypto/crypto.service';
 import { TokenService } from 'src/token/token.service';
 import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { AuthRequest } from './types';
 
 @Controller('auth')
 export class AuthController {
@@ -38,41 +41,49 @@ export class AuthController {
       userReqData.password,
       user.password,
     );
-
     if (!validPassword || !user.isActive || user.lockedOut)
-      throw new HttpException(`Not Authenticated`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Unauthorized`, HttpStatus.UNAUTHORIZED);
 
-    const refreshToken = await this.tokenService.generateRefreshToken(user);
+    const refreshToken = await this.tokenService.generateToken(user, 'refresh');
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: false,
       sameSite: 'strict',
       path: '/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
-    const accessToken = await this.tokenService.generateAccessToken(user);
+    const accessToken = await this.tokenService.generateToken(user, 'access');
 
     return { accessToken };
   }
-  @Post('register')
-  async register(@Body() body: RegisterDto) {
-    const hashedPassword = await this.cryptoService.hashPassword(body.password);
-    await this.prismaClient.user.create({
-      data: {
-        ...body,
-        password: hashedPassword,
-        isActive: false,
-        lockedOut: false,
+  @Post('refresh')
+  async refreshToken(@Req() req, @Res({ passthrough: true }) res) {
+    const refresh_token = req.cookies['refresh_token'];
+    if (!refresh_token) throw new BadRequestException('Missing token');
+    const { refreshToken, accessToken } =
+      await this.tokenService.refreshToken(refresh_token);
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      path: '/auth/refresh',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    return { accessToken };
+  }
+  @Get('me')
+  async getUser(@Req() req: AuthRequest) {
+    const accessToken = await this.tokenService.validateToken(
+      req.headers.authorization.replace('Bearer ', ''),
+      'access',
+    );
+    const user = await this.prismaClient.user.findUnique({
+      where: {
+        id: accessToken.sub,
       },
     });
+    delete user['password'];
+    return user;
   }
-
-  // @Post('refresh')
-  // async refreshToken(@Body() body, @Req() request, @Res() res) {
-  //   // const refresh_token = request.cookies['refresh_token'];
-  //   // console.log(refresh_token);
-  //   // const validToken = this.tokenService.validateRefreshToken(refresh_token);
-  //   // gets a token form user and returns new one both access and refresh?
-  // }
 }
