@@ -7,6 +7,7 @@ import { TokenService } from './token/token.service';
 import { PrismaClient } from '@prisma/client';
 import { CryptoService } from './crypto/crypto.service';
 import { UserService } from './user/user.service';
+import { AuthService } from './auth/auth.service';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { UserService } from './user/user.service';
     PrismaClient,
     CryptoService,
     UserService,
+    AuthService,
   ],
 })
 export class AppModule {}

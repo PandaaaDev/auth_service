@@ -1,12 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly prismaClient: PrismaClient,
+    private readonly userService: UserService,
   ) {}
 
   async generateToken(user: Pick<UserType, 'id'>, type: 'access' | 'refresh') {
@@ -36,7 +36,7 @@ export class TokenService {
   async refreshToken(token) {
     const validToken = await this.validateToken(token, 'refresh');
     if (validToken) {
-      const user = await this.prismaClient.user.findUnique(validToken.sub);
+      const user = await this.userService.getUserByID(validToken.sub);
       return {
         accessToken: this.generateToken(user, 'access'),
         refreshToken: this.generateToken(user, 'refresh'),
